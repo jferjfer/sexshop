@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Velvet Rouge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    :root{
+      --gold:#c9a84c;--red:#8b1a1a;--bg:#0a0a0a;--bg2:#111;--text:#e8e0d0;--muted:#888;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;}
+    img{display:block;width:100%;height:100%;object-fit:cover;}
+
+    /* AGE GATE */
+    #agegate{
+      position:fixed;inset:0;background:#000;display:flex;align-items:center;
+      justify-content:center;z-index:9999;flex-direction:column;gap:24px;text-align:center;padding:24px;
+    }
+    #agegate h2{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold);}
+    #agegate p{color:var(--muted);font-size:0.85rem;max-width:360px;line-height:1.7;}
+    .age-btns{display:flex;gap:16px;}
+    .age-btns button{
+      padding:12px 32px;border:1px solid var(--gold);background:transparent;
+      color:var(--gold);font-family:'Montserrat',sans-serif;letter-spacing:2px;
+      font-size:0.8rem;cursor:pointer;transition:all 0.3s;
+    }
+    .age-btns button:hover{background:var(--gold);color:#000;}
+    .age-btns button.deny{border-color:var(--muted);color:var(--muted);}
+    .age-btns button.deny:hover{background:var(--muted);color:#000;}
+
+    /* NAV */
+    nav{
+      position:fixed;top:0;width:100%;z-index:100;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 60px;height:70px;background:rgba(0,0,0,0.92);
+      backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,0.15);
+      transition:all 0.3s;
+    }
+    nav.scrolled{height:60px;background:rgba(0,0,0,0.98);}
+    .logo{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--gold);letter-spacing:3px;text-decoration:none;}
+    .logo span{color:var(--red);font-style:italic;}
+
+    .nav-center{display:flex;align-items:center;gap:0;}
+    .nav-item{position:relative;}
+    .nav-item>a{
+      display:flex;align-items:center;gap:4px;
+      color:var(--text);text-decoration:none;font-size:0.72rem;
+      letter-spacing:2px;text-transform:uppercase;padding:0 18px;height:70px;
+      transition:color 0.3s;border-bottom:2px solid transparent;
+    }
+    .nav-item>a:hover,.nav-item>a.active{color:var(--gold);border-bottom-color:var(--gold);}
+    .nav-item>a svg{width:10px;height:10px;stroke:currentColor;fill:none;transition:transform 0.3s;}
+    .nav-item:hover>a svg{transform:rotate(180deg);}
+
+    /* DROPDOWN */
+    .dropdown{
+      position:absolute;top:100%;left:0;min-width:200px;
+      background:#111;border:1px solid rgba(201,168,76,0.15);
+      opacity:0;visibility:hidden;transform:translateY(8px);
+      transition:all 0.25s;z-index:200;
+    }
+    .nav-item:hover .dropdown{opacity:1;visibility:visible;transform:translateY(0);}
+    .dropdown a{
+      display:flex;align-items:center;gap:10px;
+      padding:12px 20px;color:var(--muted);text-decoration:none;
+      font-size:0.78rem;transition:all 0.2s;border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .dropdown a:hover{color:var(--gold);background:rgba(201,168,76,0.05);padding-left:26px;}
+    .dropdown a span{font-size:1rem;}
+
+    .nav-right{display:flex;align-items:center;gap:16px;}
+
+    /* SEARCH BAR */
+    .search-wrap{position:relative;display:flex;align-items:center;}
+    .search-wrap input{
+      width:0;padding:8px 0;background:transparent;border:none;border-bottom:1px solid transparent;
+      color:var(--text);font-family:'Montserrat',sans-serif;font-size:0.8rem;outline:none;
+      transition:all 0.4s;
+    }
+    .search-wrap.open input{width:180px;padding:8px 12px;border-bottom-color:var(--gold);}
+    .search-wrap input::placeholder{color:var(--muted);}
+    .search-btn{background:none;border:none;cursor:pointer;padding:4px;display:flex;}
+    .search-btn svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:1.5;transition:stroke 0.3s;}
+    .search-btn:hover svg{stroke:var(--gold);}
+
+    .nav-icon-btn{background:none;border:none;cursor:pointer;padding:4px;display:flex;position:relative;}
+    .nav-icon-btn svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:1.5;transition:stroke 0.3s;}
+    .nav-icon-btn:hover svg{stroke:var(--gold);}
+    .badge{
+      position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;
+      font-size:0.55rem;width:15px;height:15px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    /* HAMBURGER */
+    .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;}
+    .hamburger span{display:block;width:22px;height:1.5px;background:var(--text);transition:all 0.3s;}
+
+    /* MOBILE MENU */
+    .mobile-menu{
+      position:fixed;top:70px;left:0;right:0;bottom:0;background:#0a0a0a;
+      z-index:99;padding:32px;display:none;flex-direction:column;gap:8px;overflow-y:auto;
+    }
+    .mobile-menu.open{display:flex;}
+    .mobile-menu a{
+      color:var(--text);text-decoration:none;font-size:1rem;
+      padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+      font-family:'Playfair Display',serif;
+    }
+    .mobile-menu a:hover{color:var(--gold);}
+
+    /* HERO SLIDER */
+    .hero{height:100vh;position:relative;overflow:hidden;}
+    .slides{display:flex;height:100%;transition:transform 0.8s cubic-bezier(0.77,0,0.175,1);}
+    .slide{min-width:100%;height:100%;position:relative;flex-shrink:0;}
+    .slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+    .slide-overlay{
+      position:absolute;inset:0;
+      background:linear-gradient(to right,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.2) 100%);
+    }
+    .slide-content{
+      position:absolute;bottom:120px;left:80px;max-width:560px;
+    }
+    .slide-tag{font-size:0.65rem;letter-spacing:6px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;}
+    .slide-content h1{
+      font-family:'Playfair Display',serif;font-size:clamp(2.5rem,5vw,5rem);
+      line-height:1.1;margin-bottom:16px;
+    }
+    .slide-content h1 em{color:var(--gold);font-style:italic;display:block;}
+    .slide-content p{color:rgba(232,224,208,0.75);font-size:0.9rem;line-height:1.8;margin-bottom:32px;max-width:400px;}
+    .hero-btns{display:flex;gap:12px;align-items:center;}
+    .btn-gold{
+      display:inline-block;padding:13px 40px;border:1px solid var(--gold);
+      color:var(--gold);text-decoration:none;font-size:0.72rem;letter-spacing:3px;
+      text-transform:uppercase;transition:all 0.4s;position:relative;overflow:hidden;
+    }
+    .btn-gold::before{
+      content:'';position:absolute;inset:0;background:var(--gold);
+      transform:translateX(-100%);transition:transform 0.4s;z-index:-1;
+    }
+    .btn-gold:hover{color:#000;}
+    .btn-gold:hover::before{transform:translateX(0);}
+    .btn-ghost{
+      display:inline-block;padding:13px 32px;border:1px solid rgba(255,255,255,0.2);
+      color:var(--text);text-decoration:none;font-size:0.72rem;letter-spacing:3px;
+      text-transform:uppercase;transition:all 0.3s;
+    }
+    .btn-ghost:hover{border-color:var(--text);}
+
+    /* SLIDER CONTROLS */
+    .slider-dots{
+      position:absolute;bottom:40px;left:80px;display:flex;gap:8px;z-index:10;
+    }
+    .dot{
+      width:24px;height:2px;background:rgba(255,255,255,0.3);cursor:pointer;transition:all 0.3s;
+    }
+    .dot.active{background:var(--gold);width:40px;}
+    .slider-arrows{position:absolute;bottom:32px;right:60px;display:flex;gap:8px;z-index:10;}
+    .arrow-btn{
+      width:44px;height:44px;border:1px solid rgba(201,168,76,0.3);background:transparent;
+      color:var(--gold);cursor:pointer;font-size:1rem;transition:all 0.3s;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .arrow-btn:hover{background:var(--gold);color:#000;}
+
+    /* TRUST BAR */
+    .trust-bar{
+      background:var(--bg2);border-bottom:1px solid rgba(201,168,76,0.1);
+      display:flex;justify-content:center;gap:48px;padding:14px 60px;flex-wrap:wrap;
+    }
+    .trust-item{display:flex;align-items:center;gap:8px;font-size:0.72rem;letter-spacing:1px;color:var(--muted);}
+    .trust-item svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:1.5;flex-shrink:0;}
+
+    /* SECTIONS */
+    .section{padding:90px 60px;}
+    .section-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px;}
+    .section-label{font-size:0.65rem;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+    .section-title{font-family:'Playfair Display',serif;font-size:2.2rem;line-height:1.2;}
+    .section-title em{color:var(--gold);font-style:italic;}
+    .see-all{
+      color:var(--muted);font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;
+      text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.3s;
+    }
+    .see-all:hover{color:var(--gold);}
+
+    /* CATEGORIES GRID */
+    .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,260px);gap:3px;}
+    .cat-item{position:relative;overflow:hidden;cursor:pointer;}
+    .cat-item:first-child{grid-row:span 2;}
+    .cat-item img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 0.7s ease;}
+    .cat-item:hover img{transform:scale(1.06);}
+    .cat-overlay{
+      position:absolute;inset:0;
+      background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.1) 60%);
+      display:flex;flex-direction:column;justify-content:flex-end;padding:24px;
+      transition:background 0.3s;
+    }
+    .cat-item:hover .cat-overlay{background:linear-gradient(to top,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.2) 60%);}
+    .cat-name{font-family:'Playfair Display',serif;font-size:1.2rem;color:#fff;margin-bottom:4px;}
+    .cat-count{font-size:0.65rem;color:var(--gold);letter-spacing:2px;}
+    .cat-arrow{
+      position:absolute;top:16px;right:16px;width:32px;height:32px;
+      border:1px solid rgba(201,168,76,0.5);display:flex;align-items:center;
+      justify-content:center;color:var(--gold);font-size:0.8rem;
+      opacity:0;transform:translateY(-4px);transition:all 0.3s;
+    }
+    .cat-item:hover .cat-arrow{opacity:1;transform:translateY(0);}
+
+    /* PRODUCTS */
+    .featured{background:var(--bg2);}
+    .products-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+
+    /* FILTER TABS */
+    .filter-tabs{display:flex;gap:0;margin-bottom:36px;border-bottom:1px solid rgba(255,255,255,0.08);}
+    .filter-tab{
+      padding:10px 20px;font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;
+      color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;
+      margin-bottom:-1px;transition:all 0.3s;background:none;border-top:none;border-left:none;border-right:none;
+    }
+    .filter-tab:hover{color:var(--text);}
+    .filter-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+    .product-card{cursor:pointer;background:var(--bg);transition:transform 0.3s;}
+    .product-card:hover{transform:translateY(-4px);}
+    .product-img{aspect-ratio:3/4;position:relative;overflow:hidden;}
+    .product-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 0.6s;}
+    .product-card:hover .product-img img{transform:scale(1.05);}
+    .product-badge{
+      position:absolute;top:12px;left:12px;background:var(--red);color:#fff;
+      font-size:0.58rem;letter-spacing:2px;padding:4px 10px;text-transform:uppercase;z-index:2;
+    }
+    .product-badge.gold{background:var(--gold);color:#000;}
+    .product-actions{
+      position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.88);
+      padding:12px;transform:translateY(100%);transition:transform 0.3s;
+      display:flex;gap:8px;z-index:2;
+    }
+    .product-card:hover .product-actions{transform:translateY(0);}
+    .btn-add{
+      flex:1;padding:10px;background:var(--gold);color:#000;border:none;
+      font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+      font-family:'Montserrat',sans-serif;transition:background 0.3s;
+    }
+    .btn-add:hover{background:#b8943e;}
+    .btn-wish{
+      width:40px;height:40px;border:1px solid rgba(201,168,76,0.4);background:transparent;
+      color:var(--gold);cursor:pointer;font-size:1rem;transition:all 0.3s;
+    }
+    .btn-wish:hover{background:rgba(201,168,76,0.1);}
+    .product-info{padding:14px 0 4px;}
+    .product-cat{font-size:0.62rem;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+    .product-name{font-family:'Playfair Display',serif;font-size:0.95rem;margin-bottom:6px;}
+    .product-stars{color:var(--gold);font-size:0.65rem;margin-bottom:6px;}
+    .product-price{color:var(--text);font-size:0.88rem;}
+    .product-price s{color:var(--muted);font-size:0.78rem;margin-right:6px;}
+
+    /* PROMO SPLIT */
+    .promo-split{display:grid;grid-template-columns:1fr 1fr;}
+    .promo-img{position:relative;min-height:480px;overflow:hidden;}
+    .promo-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+    .promo-img-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.35);}
+    .promo-content{
+      background:linear-gradient(135deg,#1a0505,#0a0a0a);
+      display:flex;flex-direction:column;justify-content:center;padding:80px 60px;
+    }
+    .promo-content h2{font-family:'Playfair Display',serif;font-size:2.4rem;margin-bottom:16px;line-height:1.2;}
+    .promo-content h2 em{color:var(--gold);font-style:italic;}
+    .promo-content p{color:var(--muted);line-height:1.9;font-size:0.88rem;margin-bottom:32px;max-width:380px;}
+    .promo-stats{display:flex;gap:40px;margin-bottom:36px;}
+    .stat-num{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold);}
+    .stat-label{font-size:0.62rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+
+    /* REVIEWS */
+    .reviews{background:var(--bg2);}
+    .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+    .review-card{
+      background:var(--bg);padding:28px;border:1px solid rgba(255,255,255,0.05);
+      transition:border-color 0.3s;
+    }
+    .review-card:hover{border-color:rgba(201,168,76,0.2);}
+    .review-stars{color:var(--gold);font-size:0.8rem;margin-bottom:12px;}
+    .review-text{color:var(--muted);font-size:0.82rem;line-height:1.8;margin-bottom:16px;font-style:italic;}
+    .review-author{display:flex;align-items:center;gap:12px;}
+    .review-avatar{
+      width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;
+      background:var(--bg2);
+    }
+    .review-avatar img{width:100%;height:100%;object-fit:cover;}
+    .review-name{font-size:0.78rem;color:var(--text);}
+    .review-date{font-size:0.65rem;color:var(--muted);}
+    .review-verified{font-size:0.6rem;color:var(--gold);letter-spacing:1px;}
+
+    /* NEWSLETTER */
+    .newsletter{padding:80px 60px;text-align:center;border-top:1px solid rgba(201,168,76,0.1);}
+    .newsletter h3{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:8px;}
+    .newsletter h3 em{color:var(--gold);font-style:italic;}
+    .newsletter p{color:var(--muted);font-size:0.82rem;margin-bottom:28px;}
+    .newsletter-form{display:flex;max-width:440px;margin:0 auto;}
+    .newsletter-form input{
+      flex:1;padding:14px 20px;background:var(--bg2);border:1px solid rgba(201,168,76,0.2);
+      border-right:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:0.82rem;outline:none;
+    }
+    .newsletter-form input:focus{border-color:rgba(201,168,76,0.5);}
+    .newsletter-form input::placeholder{color:var(--muted);}
+    .newsletter-form button{
+      padding:14px 24px;background:var(--gold);border:none;color:#000;
+      font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+      font-family:'Montserrat',sans-serif;transition:background 0.3s;
+    }
+    .newsletter-form button:hover{background:#b8943e;}
+
+    /* FOOTER */
+    footer{
+      background:#050505;padding:60px;border-top:1px solid rgba(201,168,76,0.08);
+      display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;
+    }
+    .footer-logo{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold);margin-bottom:12px;}
+    .footer-logo span{color:var(--red);font-style:italic;}
+    .footer-desc{color:var(--muted);font-size:0.78rem;line-height:1.9;margin-bottom:20px;}
+    .footer-social{display:flex;gap:10px;}
+    .social-btn{
+      width:34px;height:34px;border:1px solid rgba(201,168,76,0.2);
+      display:flex;align-items:center;justify-content:center;
+      color:var(--muted);font-size:0.75rem;text-decoration:none;transition:all 0.3s;
+    }
+    .social-btn:hover{border-color:var(--gold);color:var(--gold);}
+    .footer-col h4{font-size:0.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
+    .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+    .footer-col ul a{color:var(--muted);text-decoration:none;font-size:0.78rem;transition:color 0.3s;}
+    .footer-col ul a:hover{color:var(--text);}
+    .footer-bottom{
+      padding:18px 60px;border-top:1px solid rgba(255,255,255,0.04);
+      display:flex;justify-content:space-between;align-items:center;background:#050505;
+    }
+    .footer-bottom p{color:var(--muted);font-size:0.72rem;}
+    .payment-icons{display:flex;gap:8px;align-items:center;}
+    .pay-badge{
+      padding:4px 10px;border:1px solid rgba(255,255,255,0.1);
+      font-size:0.62rem;color:var(--muted);letter-spacing:1px;
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:900px){
+      nav{padding:0 24px;}
+      .nav-center{display:none;}
+      .hamburger{display:flex;}
+      .section{padding:60px 24px;}
+      .products-grid{grid-template-columns:repeat(2,1fr);}
+      .cat-grid{grid-template-columns:1fr 1fr;grid-template-rows:auto;}
+      .cat-item:first-child{grid-row:span 1;}
+      .promo-split{grid-template-columns:1fr;}
+      .reviews-grid{grid-template-columns:1fr;}
+      footer{grid-template-columns:1fr 1fr;padding:40px 24px;}
+      .footer-bottom{padding:16px 24px;flex-direction:column;gap:8px;text-align:center;}
+      .trust-bar{gap:20px;padding:12px 24px;}
+      .slide-content{left:24px;bottom:100px;}
+      .slider-arrows{right:24px;}
+      .slider-dots{left:24px;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AGE GATE -->
+  <div id="agegate">
+    <div style="font-size:3rem">🌹</div>
+    <h2>Velvet Rouge</h2>
+    <p>Este sitio contiene contenido para adultos. ¿Confirmas que tienes 18 años o más?</p>
+    <div class="age-btns">
+      <button onclick="document.getElementById('agegate').style.display='none'">Sí, tengo 18+</button>
+      <button class="deny" onclick="window.location='https://google.com'">No, salir</button>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <a href="#" class="logo">Velvet <span>Rouge</span></a>
+
+    <div class="nav-center">
+      <div class="nav-item">
+        <a href="#">Inicio</a>
+      </div>
+      <div class="nav-item">
+        <a href="#">Catálogo <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></a>
+        <div class="dropdown">
+          <a href="#"><span>🌸</span> Lencería</a>
+          <a href="#"><span>✨</span> Juguetes</a>
+          <a href="#"><span>💧</span> Lubricantes</a>
+          <a href="#"><span>🖤</span> Bondage</a>
+          <a href="#"><span>💑</span> Parejas</a>
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="#">Novedades</a>
+      </div>
+      <div class="nav-item">
+        <a href="#" style="color:var(--gold)">Ofertas</a>
+      </div>
+      <div class="nav-item">
+        <a href="#">Nosotros</a>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <div class="search-wrap" id="searchWrap">
+        <input type="text" placeholder="Buscar productos..."/>
+        <button class="search-btn" onclick="document.getElementById('searchWrap').classList.toggle('open')">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+      </div>
+      <button class="nav-icon-btn">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+      <button class="nav-icon-btn">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+      <button class="nav-icon-btn">
+        <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="badge">3</span>
+      </button>
+      <button class="hamburger" onclick="document.getElementById('mobileMenu').classList.toggle('open')">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#">Inicio</a>
+    <a href="#">Lencería</a>
+    <a href="#">Juguetes</a>
+    <a href="#">Lubricantes</a>
+    <a href="#">Bondage</a>
+    <a href="#">Parejas</a>
+    <a href="#">Novedades</a>
+    <a href="#" style="color:var(--gold)">Ofertas</a>
+    <a href="#">Mi cuenta</a>
+    <a href="#">Carrito (3)</a>
+  </div>
+
+  <!-- HERO SLIDER -->
+  <section class="hero">
+    <div class="slides" id="slides">
+      <div class="slide">
+        <img src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1600&q=80" alt="Colección Lencería"/>
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <p class="slide-tag">Nueva Colección 2025</p>
+          <h1>Descubre tu<em>Deseo</em></h1>
+          <p>Lencería de lujo con envío discreto y seguro a toda Colombia.</p>
+          <div class="hero-btns">
+            <a href="#" class="btn-gold">Explorar Colección</a>
+            <a href="#" class="btn-ghost">Ver Novedades</a>
+          </div>
+        </div>
+      </div>
+      <div class="slide">
+        <img src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=1600&q=80" alt="Bienestar íntimo"/>
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <p class="slide-tag">Bienestar & Placer</p>
+          <h1>Tu placer,<em>nuestra pasión</em></h1>
+          <p>Productos de alta calidad seleccionados para tu bienestar íntimo.</p>
+          <div class="hero-btns">
+            <a href="#" class="btn-gold">Ver Productos</a>
+            <a href="#" class="btn-ghost">Ofertas</a>
+          </div>
+        </div>
+      </div>
+      <div class="slide">
+        <img src="https://images.unsplash.com/photo-1602752250015-52934bc45613?w=1600&q=80" alt="Parejas"/>
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <p class="slide-tag">Para Parejas</p>
+          <h1>Momentos<em>inolvidables</em></h1>
+          <p>Descubre nuestra colección especial para compartir en pareja.</p>
+          <div class="hero-btns">
+            <a href="#" class="btn-gold">Ver Colección</a>
+            <a href="#" class="btn-ghost">Más Info</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slider-dots" id="dots">
+      <div class="dot active" onclick="goTo(0)"></div>
+      <div class="dot" onclick="goTo(1)"></div>
+      <div class="dot" onclick="goTo(2)"></div>
+    </div>
+    <div class="slider-arrows">
+      <button class="arrow-btn" onclick="prevSlide()">←</button>
+      <button class="arrow-btn" onclick="nextSlide()">→</button>
+    </div>
+  </section>
+
+  <!-- TRUST BAR -->
+  <div class="trust-bar">
+    <div class="trust-item">
+      <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Envío discreto garantizado
+    </div>
+    <div class="trust-item">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Pago 100% seguro con ePayco
+    </div>
+    <div class="trust-item">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Devoluciones fáciles
+    </div>
+    <div class="trust-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Despacho en 24 horas
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Explora</div>
+        <h2 class="section-title">Nuestras <em>Categorías</em></h2>
+      </div>
+      <a href="#" class="see-all">Ver todas →</a>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-item">
+        <img src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80" alt="Lencería"/>
+        <div class="cat-overlay">
+          <div class="cat-name">Lencería</div>
+          <div class="cat-count">48 productos</div>
+        </div>
+        <div class="cat-arrow">→</div>
+      </div>
+      <div class="cat-item">
+        <img src="https://images.unsplash.com/photo-1583209814683-c023dd293cc6?w=800&q=80" alt="Juguetes"/>
+        <div class="cat-overlay">
+          <div class="cat-name">Juguetes</div>
+          <div class="cat-count">62 productos</div>
+        </div>
+        <div class="cat-arrow">→</div>
+      </div>
+      <div class="cat-item">
+        <img src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&q=80" alt="Lubricantes"/>
+        <div class="cat-overlay">
+          <div class="cat-name">Lubricantes & Aceites</div>
+          <div class="cat-count">24 productos</div>
+        </div>
+        <div class="cat-arrow">→</div>
+      </div>
+      <div class="cat-item">
+        <img src="https://images.unsplash.com/photo-1602752250015-52934bc45613?w=800&q=80" alt="Parejas"/>
+        <div class="cat-overlay">
+          <div class="cat-name">Parejas</div>
+          <div class="cat-count">19 productos</div>
+        </div>
+        <div class="cat-arrow">→</div>
+      </div>
+      <div class="cat-item">
+        <img src="https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=800&q=80" alt="Bondage"/>
+        <div class="cat-overlay">
+          <div class="cat-name">Bondage</div>
+          <div class="cat-count">31 productos</div>
+        </div>
+        <div class="cat-arrow">→</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED PRODUCTS -->
+  <section class="section featured">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Lo más deseado</div>
+        <h2 class="section-title">Productos <em>Destacados</em></h2>
+      </div>
+      <a href="#" class="see-all">Ver todos →</a>
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active">Todos</button>
+      <button class="filter-tab">Lencería</button>
+      <button class="filter-tab">Juguetes</button>
+      <button class="filter-tab">Lubricantes</button>
+      <button class="filter-tab">Parejas</button>
+    </div>
+    <div class="products-grid">
+      <div class="product-card">
+        <div class="product-img">
+          <img src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=600&q=80" alt="Set Lencería Noir"/>
+          <div class="product-badge">Nuevo</div>
+          <div class="product-actions">
+            <button class="btn-add">Agregar al carrito</button>
+            <button class="btn-wish">♡</button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div class="product-cat">Lencería</div>
+          <div class="product-stars">★★★★★</div>
+          <div class="product-name">Set Lencería Noir</div>
+          <div class="product-price"><s>$189.000</s> $149.000</div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">
+          <img src="https://images.unsplash.com/photo-1583209814683-c023dd293cc6?w=600&q=80" alt="Masajeador Velvet Pro"/>
+          <div class="product-badge gold">-30%</div>
+          <div class="product-actions">
+            <button class="btn-add">Agregar al carrito</button>
+            <button class="btn-wish">♡</button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div class="product-cat">Juguetes</div>
+          <div class="product-stars">★★★★☆</div>
+          <div class="product-name">Masajeador Velvet Pro</div>
+          <div class="product-price"><s>$320.000</s> $224.000</div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">
+          <img src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600&q=80" alt="Aceite Sensual Rose"/>
+          <div class="product-actions">
+            <button class="btn-add">Agregar al carrito</button>
+            <button class="btn-wish">♡</button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div class="product-cat">Lubricantes</div>
+          <div class="product-stars">★★★★★</div>
+          <div class="product-name">Aceite Sensual Rose</div>
+          <div class="product-price">$85.000</div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">
+          <img src="https://images.unsplash.com/photo-1602752250015-52934bc45613?w=600&q=80" alt="Kit Parejas Luxe"/>
+          <div class="product-badge">Top</div>
+          <div class="product-actions">
+            <button class="btn-add">Agregar al carrito</button>
+            <button class="btn-wish">♡</button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div class="product-cat">Parejas</div>
+          <div class="product-stars">★★★★★</div>
+          <div class="product-name">Kit Parejas Luxe</div>
+          <div class="product-price">$265.000</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROMO SPLIT -->
+  <div class="promo-split">
+    <div class="promo-img">
+      <img src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=900&q=80" alt="Envío discreto"/>
+      <div class="promo-img-overlay"></div>
+    </div>
+    <div class="promo-content">
+      <div class="section-label">Nuestra promesa</div>
+      <h2>Envío <em>discreto</em><br/>garantizado</h2>
+      <p>Todos nuestros pedidos llegan en empaque neutro, sin logos ni indicaciones del contenido. Tu privacidad es nuestra prioridad absoluta.</p>
+      <div class="promo-stats">
+        <div>
+          <div class="stat-num">+5K</div>
+          <div class="stat-label">Clientes felices</div>
+        </div>
+        <div>
+          <div class="stat-num">100%</div>
+          <div class="stat-label">Discreto</div>
+        </div>
+        <div>
+          <div class="stat-num">24h</div>
+          <div class="stat-label">Despacho</div>
+        </div>
+      </div>
+      <a href="#" class="btn-gold">Conocer más</a>
+    </div>
+  </div>
+
+  <!-- REVIEWS -->
+  <section class="section reviews">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Opiniones</div>
+        <h2 class="section-title">Lo que dicen<br/><em>nuestros clientes</em></h2>
+      </div>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Excelente calidad y el empaque fue completamente discreto. Llegó en 2 días. Definitivamente volvería a comprar."</p>
+        <div class="review-author">
+          <div class="review-avatar">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80" alt="Cliente"/>
+          </div>
+          <div>
+            <div class="review-name">Valentina M.</div>
+            <div class="review-date">Hace 3 días</div>
+            <div class="review-verified">✓ Compra verificada</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"La atención al cliente es increíble. Me ayudaron a elegir el producto perfecto. El sitio es muy fácil de usar."</p>
+        <div class="review-author">
+          <div class="review-avatar">
+            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80" alt="Cliente"/>
+          </div>
+          <div>
+            <div class="review-name">Camila R.</div>
+            <div class="review-date">Hace 1 semana</div>
+            <div class="review-verified">✓ Compra verificada</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★☆</div>
+        <p class="review-text">"Muy buena experiencia. Los productos son de alta calidad y el precio es justo. El envío fue rápido y discreto."</p>
+        <div class="review-author">
+          <div class="review-avatar">
+            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&q=80" alt="Cliente"/>
+          </div>
+          <div>
+            <div class="review-name">Daniela P.</div>
+            <div class="review-date">Hace 2 semanas</div>
+            <div class="review-verified">✓ Compra verificada</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section class="newsletter">
+    <h3>Únete al <em>Club Velvet</em></h3>
+    <p>Recibe ofertas exclusivas, novedades y un 10% de descuento en tu primera compra</p>
+    <div class="newsletter-form">
+      <input type="email" placeholder="tu@correo.com"/>
+      <button>Suscribirse</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <div class="footer-logo">Velvet <span>Rouge</span></div>
+      <p class="footer-desc">Tu destino de placer con elegancia y discreción. Envíos a todo Colombia.</p>
+      <div class="footer-social">
+        <a href="#" class="social-btn">ig</a>
+        <a href="#" class="social-btn">fb</a>
+        <a href="#" class="social-btn">tt</a>
+        <a href="#" class="social-btn">wa</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Tienda</h4>
+      <ul>
+        <li><a href="#">Catálogo</a></li>
+        <li><a href="#">Novedades</a></li>
+        <li><a href="#">Ofertas</a></li>
+        <li><a href="#">Marcas</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Ayuda</h4>
+      <ul>
+        <li><a href="#">Envíos</a></li>
+        <li><a href="#">Devoluciones</a></li>
+        <li><a href="#">Preguntas frecuentes</a></li>
+        <li><a href="#">Contacto</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="#">Privacidad</a></li>
+        <li><a href="#">Términos</a></li>
+        <li><a href="#">Cookies</a></li>
+        <li><a href="#">+18</a></li>
+      </ul>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <p>© 2025 Velvet Rouge. Todos los derechos reservados.</p>
+    <div class="payment-icons">
+      <span class="pay-badge">ePayco</span>
+      <span class="pay-badge">Visa</span>
+      <span class="pay-badge">Mastercard</span>
+      <span class="pay-badge">PSE</span>
+    </div>
+  </div>
+
+  <script>
+    // NAV SCROLL
+    window.addEventListener('scroll',()=>{
+      document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>50);
+    });
+
+    // SLIDER
+    let current=0;
+    const total=3;
+    function goTo(n){
+      current=n;
+      document.getElementById('slides').style.transform=`translateX(-${current*100}%)`;
+      document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===current));
+    }
+    function nextSlide(){goTo((current+1)%total);}
+    function prevSlide(){goTo((current-1+total)%total);}
+    setInterval(nextSlide,5000);
+
+    // FILTER TABS
+    document.querySelectorAll('.filter-tab').forEach(tab=>{
+      tab.addEventListener('click',()=>{
+        document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
